@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gallery</title>
+<link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<input type="file" id="file-input" accept="image/*" multiple>
+
+<nav class="navbar">
+  <div class="logo">
+    <div class="logo-orb"></div>
+    <span class="logo-text">Gallery</span>
+  </div>
+  <div class="navbar-links">
+    <a href="#" class="active">Photos</a>
+  </div>
+  <div id="owner-controls" class="owner-controls" style="display:none;">
+    <label for="file-input" class="btn">+ Upload</label>
+  </div>
+</nav>
+
+<div class="hero">
+  <h1 class="hero-title">Your <strong>photos</strong>,<br>kept here.</h1>
+  <p class="hero-sub">Browse the gallery below.</p>
+</div>
+
+<div class="stats-row">
+  <div class="stat-pill">
+    <div class="stat-pill-num" id="stat-photos">0</div>
+    <div class="stat-pill-label">Photos</div>
+  </div>
+</div>
+
+<div class="main-panel" id="gallery">
+  <div class="panel-toolbar">
+    <div class="panel-tabs">
+      <button class="panel-tab active">All Photos</button>
+    </div>
+  </div>
+  <div class="gallery-body">
+    <div class="empty-state" id="empty-state">
+      <div class="empty-orb"></div>
+      <div class="empty-title" id="empty-title">No photos yet</div>
+      <div class="empty-sub" id="empty-sub">Check back soon.</div>
+    </div>
+    <div class="gallery-grid" id="gallery-grid" style="display:none;"></div>
+  </div>
+</div>
+
+<div class="lightbox" id="lightbox">
+  <div class="lb-card">
+    <div class="lb-titlebar">
+      <span class="lb-filename" id="lb-filename">Photo</span>
+      <div class="lb-titlebar-actions">
+        <button class="lb-delete" id="lb-delete" style="display:none;">Delete</button>
+        <button class="lb-close" id="lb-close">&#x2715;</button>
+      </div>
+    </div>
+    <img id="lb-img" src="" alt="">
+  </div>
+</div>
+
+<!-- Toast notifications -->
+<div id="toast" class="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

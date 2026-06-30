@@ -1,0 +1,16 @@
+# Never commit your actual photos to the repo —
+# they live on the Railway Volume instead, not in git.
+uploads/*
+!uploads/.gitkeep
+
+# Never commit secrets
+.env
+.env.*
+
+# Dependencies
+node_modules/
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+*.log
