@@ -17,6 +17,31 @@
 
 const ownerToken = localStorage.getItem('uploadToken') || null;
 
+// ─── FAVORITES (per-browser, anyone can use this — not tied to ownership) ───
+function getFavorites() {
+  try {
+    return JSON.parse(localStorage.getItem('favorites') || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function isFavorite(filename) {
+  return getFavorites().includes(filename);
+}
+
+function toggleFavorite(filename) {
+  const favs = getFavorites();
+  const idx = favs.indexOf(filename);
+  if (idx === -1) {
+    favs.push(filename);
+  } else {
+    favs.splice(idx, 1);
+  }
+  localStorage.setItem('favorites', JSON.stringify(favs));
+  return favs.includes(filename);
+}
+
 // ─── ELEMENTS ───
 const fileInput      = document.getElementById('file-input');
 const grid            = document.getElementById('gallery-grid');
@@ -30,9 +55,13 @@ const lbImg            = document.getElementById('lb-img');
 const lbFilename      = document.getElementById('lb-filename');
 const lbClose          = document.getElementById('lb-close');
 const lbDelete        = document.getElementById('lb-delete');
+const lbFavorite      = document.getElementById('lb-favorite');
+const panelTabs        = document.querySelectorAll('.panel-tab');
 const toastEl          = document.getElementById('toast');
 
 let currentLightboxFile = null;
+let allPhotos = []; // cache of last-loaded photo list, so filtering doesn't need a refetch
+let currentFilter = 'all';
 
 // ─── TOAST ───
 function showToast(message, isError = false) {
@@ -53,23 +82,33 @@ async function loadPhotos() {
   try {
     const res = await fetch('/api/photos');
     const data = await res.json();
-    renderPhotos(data.photos || []);
+    allPhotos = data.photos || [];
+    renderPhotos();
   } catch (err) {
     showToast('Could not load photos.', true);
   }
 }
 
-function renderPhotos(photos) {
+function renderPhotos() {
+  const photos = currentFilter === 'favorites'
+    ? allPhotos.filter(p => isFavorite(p.filename))
+    : allPhotos;
+
   grid.innerHTML = '';
-  statPhotos.textContent = photos.length;
+  statPhotos.textContent = allPhotos.length;
 
   if (photos.length === 0) {
     emptyState.style.display = '';
     grid.style.display = 'none';
-    emptyTitle.textContent = 'No photos yet';
-    emptySub.textContent = ownerToken
-      ? 'Click "Upload" above to add some.'
-      : 'Check back soon.';
+    if (currentFilter === 'favorites') {
+      emptyTitle.textContent = 'No favorites yet';
+      emptySub.textContent = 'Click the star on a photo to add it here.';
+    } else {
+      emptyTitle.textContent = 'No photos yet';
+      emptySub.textContent = ownerToken
+        ? 'Click "Upload" above to add some.'
+        : 'Check back soon.';
+    }
     return;
   }
 
@@ -77,10 +116,22 @@ function renderPhotos(photos) {
   grid.style.display = '';
 
   photos.forEach(photo => {
+    const fav = isFavorite(photo.filename);
     const card = document.createElement('div');
     card.className = 'photo-card';
-    card.innerHTML = `<img src="/photos/${encodeURIComponent(photo.filename)}" loading="lazy" alt="">`;
-    card.addEventListener('click', () => openLightbox(photo.filename));
+    card.innerHTML = `
+      <img src="/photos/${encodeURIComponent(photo.filename)}" loading="lazy" alt="">
+      <button class="photo-card-star${fav ? ' is-favorite' : ''}" title="Toggle favorite">&#9733;</button>
+    `;
+    card.querySelector('img').addEventListener('click', () => openLightbox(photo.filename));
+    card.querySelector('.photo-card-star').addEventListener('click', e => {
+      e.stopPropagation();
+      const nowFav = toggleFavorite(photo.filename);
+      e.currentTarget.classList.toggle('is-favorite', nowFav);
+      if (currentFilter === 'favorites' && !nowFav) {
+        renderPhotos(); // remove it from the favorites view immediately
+      }
+    });
     grid.appendChild(card);
   });
 }
@@ -90,6 +141,7 @@ function openLightbox(filename) {
   currentLightboxFile = filename;
   lbImg.src = `/photos/${encodeURIComponent(filename)}`;
   lbFilename.textContent = filename;
+  lbFavorite.classList.toggle('is-favorite', isFavorite(filename));
   lightbox.classList.add('open');
 }
 
@@ -101,6 +153,24 @@ function closeLightbox() {
 lbClose.addEventListener('click', closeLightbox);
 lightbox.addEventListener('click', e => { if (e.target === lightbox) closeLightbox(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+// ─── FAVORITE TOGGLE (lightbox) ───
+lbFavorite.addEventListener('click', () => {
+  if (!currentLightboxFile) return;
+  const nowFav = toggleFavorite(currentLightboxFile);
+  lbFavorite.classList.toggle('is-favorite', nowFav);
+  renderPhotos(); // keep grid stars + favorites filter in sync
+});
+
+// ─── FILTER TABS ───
+panelTabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    panelTabs.forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentFilter = tab.dataset.filter || 'all';
+    renderPhotos();
+  });
+});
 
 // ─── UPLOAD (owner only) ───
 if (fileInput) {

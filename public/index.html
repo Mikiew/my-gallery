@@ -40,7 +40,8 @@
 <div class="main-panel" id="gallery">
   <div class="panel-toolbar">
     <div class="panel-tabs">
-      <button class="panel-tab active">All Photos</button>
+      <button class="panel-tab active" data-filter="all">All Photos</button>
+      <button class="panel-tab" data-filter="favorites">Favorites</button>
     </div>
   </div>
   <div class="gallery-body">
@@ -58,6 +59,7 @@
     <div class="lb-titlebar">
       <span class="lb-filename" id="lb-filename">Photo</span>
       <div class="lb-titlebar-actions">
+        <button class="lb-favorite" id="lb-favorite" title="Add to favorites">&#9734;</button>
         <button class="lb-delete" id="lb-delete" style="display:none;">Delete</button>
         <button class="lb-close" id="lb-close">&#x2715;</button>
       </div>
